@@ -41,8 +41,8 @@ AddNode<int> addition = new(graph, x, y);
 MultiplyNode<int> multiplication = new(graph, addition, z);
 ```
 
-> Note the dependency hierarchy we've created here. The addition node depends on `x` and `y`
-> whereas the multiplication node depends on `addition` and `z`.
+*Note the dependency hierarchy we've created here. The addition node depends on `x` and `y`
+whereas the multiplication node depends on `addition` and `z`.*
 
 Now all that remains is to compute the graph, which is done by firing our 'parameter' nodes, and read the output:
 
@@ -56,7 +56,7 @@ z.Fire(3);
 NodeOutput<int> output = multiplication.Output; // 9, ie. (1 + 2) * 3
 ```
 
-*There is an unexplained step here `graph.Prime()` which is explained later in [Priming](#priming)*.
+*There is an unexplained step here (`graph.Prime()`) which is covered later in [Priming](#priming)*.
 
 
 # The Basics
@@ -93,7 +93,7 @@ They can be arbitrarily simple (a single operation: addition, condition etc.) or
 
 ### Specifying Nodes
 
-Although some simple nodes come in the library, the real power comes from creating custom nodes.
+Although some simple nodes come in the framework, the real power comes from creating custom nodes.
 
 Every node must inherit from the `Node<TOuptut>` class, where `TOutput` is the output type of the node being created.
 Take this `TripleNode` as an example, which takes in a single integer and multiplies it by three:
