@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputationalGraph", "ComputationalGraph\ComputationalGraph.csproj", "{37D03BB7-BC86-4ECB-9FB3-A93BEA12201A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputationalGraph.Tests", "ComputationalGraph.Tests\ComputationalGraph.Tests.csproj", "{980348DA-094E-475B-A3B3-6328D1EC7FC1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{37D03BB7-BC86-4ECB-9FB3-A93BEA12201A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37D03BB7-BC86-4ECB-9FB3-A93BEA12201A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37D03BB7-BC86-4ECB-9FB3-A93BEA12201A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37D03BB7-BC86-4ECB-9FB3-A93BEA12201A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{980348DA-094E-475B-A3B3-6328D1EC7FC1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{980348DA-094E-475B-A3B3-6328D1EC7FC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{980348DA-094E-475B-A3B3-6328D1EC7FC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{980348DA-094E-475B-A3B3-6328D1EC7FC1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
