@@ -1,48 +1,13 @@
 ﻿using ComputationalGraph.Exceptions;
+using ComputationalGraph.Nodes.Fundamental;
 
 namespace ComputationalGraph.Core;
 
 /// <summary>
 /// A graph node.
 /// </summary>
-public abstract class Node
-{
-    /// <summary>
-    /// Gets the name of the node.
-    /// </summary>
-    public abstract string Name { get; }
-
-    /// <summary>
-    /// Gets whether the node had output last time it was fired.
-    /// </summary>
-    internal abstract bool LastHadOutput { get; }
-
-    /// <summary>
-    /// Gets the node's last display output.
-    /// </summary>
-    internal abstract string LastDisplayOutput { get; }
-
-    /// <summary>
-    /// Gets the input nodes to this node.
-    /// </summary>
-    internal abstract IEnumerable<Node> Inputs { get; }
-
-    /// <summary>
-    /// Gets all nodes (directly) dependent on this node.
-    /// </summary>
-    internal abstract IEnumerable<Node> Dependents { get; }
-
-    /// <summary>
-    /// Fires this node.
-    /// </summary>
-    internal abstract void Fire();
-}
-
-/// <summary>
-/// A graph node.
-/// </summary>
 /// <typeparam name="TOutput">The output type.</typeparam>
-public abstract class Node<TOutput> : Node
+public abstract class Node<TOutput> : GraphNode
 {
     /// <summary>
     /// Occurs when the node is fired.
@@ -51,25 +16,20 @@ public abstract class Node<TOutput> : Node
     public event Action<NodeOutput<TOutput>>? Fired;
 
     /// <summary>
+    /// The graph this node belongs to.
+    /// </summary>
+    public readonly Graph Graph;
+
+    /// <summary>
     /// The last output of this node.
     /// </summary>
     internal NodeOutput<TOutput> LastOutput;
 
     /// <inheritdoc />
-    internal override HashSet<Node> Inputs { get; }
+    public override string Name { get; }
 
     /// <inheritdoc />
-    internal override HashSet<Node> Dependents { get; }
-
-    /// <summary>
-    /// The graph this node belongs to.
-    /// </summary>
-    private protected readonly Graph Graph;
-
-    /// <summary>
-    /// The node's ID.
-    /// </summary>
-    private readonly int id;
+    internal override int? PathIndex { get; }
 
     /// <summary>
     /// The node's version, or null if the node hasn't been fired.
@@ -77,20 +37,49 @@ public abstract class Node<TOutput> : Node
     private int? version;
 
     /// <summary>
-    /// Creates a new <see cref="Node"/>.
+    /// The node's inputs.
+    /// </summary>
+    private readonly HashSet<GraphNode> inputs;
+    
+    /// <summary>
+    /// The fallback node, or null if there is no fallback.
+    /// </summary>
+    private readonly Node<TOutput>? fallbackNode;
+
+    /// <summary>
+    /// Creates a new <see cref="Node{TOutput}"/>.
     /// </summary>
     /// <param name="graph">The graph to add this node to.</param>
-    protected Node(Graph graph)
+    /// <param name="fallback">The fallback output.</param>
+    protected Node(Graph graph, TOutput fallback) : this(graph, new ConstantNode<TOutput>(graph, fallback))
     {
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="Node{TOutput}"/>.
+    /// </summary>
+    /// <param name="graph">The graph to add this node to.</param>
+    /// <param name="fallbackNode">The fallback node, or null if no fallback is to be specified.</param>
+    protected Node(Graph graph, Node<TOutput>? fallbackNode = null)
+    {
+        Graph = graph;
+
         LastOutput = Nothing();
 
-        Graph = graph;
-        id = graph.AddNode(this);
-
-        Inputs = new HashSet<Node>();
-        Dependents = new HashSet<Node>();
+        int? pathIndex = graph.AddNode(this);
+        PathIndex = pathIndex;
+        
+        Name = $"{GetType().Name}[{pathIndex}]";
 
         version = null;
+        
+        inputs = new HashSet<GraphNode>();
+
+        this.fallbackNode = fallbackNode;
+        if (fallbackNode is not null)
+        {
+            Input(fallbackNode);
+        }
     }
 
     /// <summary>
@@ -110,13 +99,8 @@ public abstract class Node<TOutput> : Node
         }
     }
 
-    /// <summary>
-    /// Gets whether the node was fired in the latest graph fire.
-    /// </summary>
-    public bool WasFired => version == Graph.Version;
-
-    /// <inheritdoc />
-    public override string Name => $"{GetType().Name} ~ {id}";
+    /// <inheritdoc/>
+    public override bool WasFired => version == Graph.Version;
 
     /// <inheritdoc />
     internal sealed override bool LastHadOutput => LastOutput.HasOutput;
@@ -125,20 +109,42 @@ public abstract class Node<TOutput> : Node
     internal sealed override string LastDisplayOutput => LastOutput.Value?.ToString() ?? string.Empty;
 
     /// <inheritdoc />
+    internal override bool ShouldFire()
+    {
+        foreach (GraphNode inputNode in inputs)
+        {
+            if (inputNode.WasFired)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <inheritdoc />
     internal sealed override void Fire()
     {
-        LastOutput = Inputs.Any(input => !input.LastHadOutput) ? ComputeFallback() : Compute();
+        LastOutput = DetermineOutput();
         version = Graph.Version;
         Fired?.Invoke(LastOutput);
     }
 
     /// <summary>
-    /// Gets the fallback node output for when some of the node's inputs have no output.
+    /// Determines the current output of the node.
     /// </summary>
-    /// <returns>The fallback output.</returns>
-    private protected virtual NodeOutput<TOutput> ComputeFallback()
+    /// <returns>The output.</returns>
+    private NodeOutput<TOutput> DetermineOutput()
     {
-        return Nothing();
+        foreach (GraphNode input in inputs)
+        {
+            if (input != fallbackNode && !input.LastHadOutput)
+            {
+                return fallbackNode?.LastOutput ?? Nothing();
+            }
+        }
+
+        return Compute();
     }
 
     /// <summary>
@@ -150,7 +156,7 @@ public abstract class Node<TOutput> : Node
     /// <returns>The input node.</returns>
     /// <exception cref="InvalidNodeInputException">Thrown if this node cannot be an input for this node.</exception>
     /// <exception cref="InvalidGraphStateException">Thrown if the graph is in an invalid state.</exception>
-    protected InputNode<TInput> Input<TInput>(Node<TInput> inputNode)
+    protected NodeInput<TInput> Input<TInput>(Node<TInput> inputNode)
     {
         if (inputNode.Graph != Graph)
         {
@@ -162,17 +168,22 @@ public abstract class Node<TOutput> : Node
             throw new InvalidGraphStateException($"Tried to add node {inputNode.Name} as an input to node {Name} whilst the graph is {Graph.State}");
         }
 
-        if (!Inputs.Add(inputNode))
+        // Make sure the node is before this one on the path
+        if (inputNode.PathIndex is int inputNodePathIndex && inputNodePathIndex >= PathIndex)
         {
-            throw new InvalidNodeInputException($"Node {inputNode} has already been added as an input of {this}");
+            throw new InvalidNodeInputException(
+                $"""
+                 Node {inputNode} cannot be added as an input to node {Name} as it doesn't sit before it in the graph.
+                 This could be because the node was created whilst constructing this node, or this is being called post-construction
+                 """);
         }
 
-        if (!inputNode.Dependents.Add(this))
+        if (!inputs.Add(inputNode))
         {
-            throw new InvalidNodeInputException($"Node {inputNode} has already been added as a dependent of {this}");
+            throw new InvalidNodeInputException($"Node {inputNode.Name} has already been added as an input of {Name}");
         }
 
-        return new InputNode<TInput>(inputNode);
+        return new NodeInput<TInput>(inputNode);
     }
 
     /// <summary>

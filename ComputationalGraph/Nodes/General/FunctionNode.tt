@@ -1,0 +1,87 @@
+﻿<#@ template language="C#" #>
+<#@ output extension=".cs" #>
+<#@ import namespace="System.Linq" #>
+
+using ComputationalGraph.Core;
+
+namespace ComputationalGraph.Nodes.General;
+<#
+    string GetInputGenericParameterName(int i)
+    {
+        return $"TInput{i}";
+    }
+
+    string GetInputGenericParameterList(int count)
+    {
+        return string.Join(", ", Enumerable.Range(1, count).Select(GetInputGenericParameterName));
+    }
+
+    string GetInputParameterName(int i)
+    {
+        return $"input{i}";
+    }
+#>
+<#
+    for (int count = 1; count <= 5; count++)
+    {
+#>
+
+/// <summary>
+/// A node which outputs a simple function of other nodes.
+/// </summary>
+<#
+        for (int i = 1; i <= count; i++)
+        {
+#>
+/// <typeparam name="TInput<#= i #>">The input type of node <#= i #>.</typeparam>
+<#
+        }
+#>
+/// <typeparam name="TOutput">The output type.</typeparam>
+public class FunctionNode<<#= GetInputGenericParameterList(count) #>, TOutput> : Node<TOutput>
+{
+<#
+        for (int i = 1; i <= count; i++)
+        {
+#>
+    private readonly InputNode<<#= GetInputGenericParameterName(i) #>> <#= GetInputParameterName(i) #>;
+<#
+        }
+#>
+
+    private readonly Func<<#= GetInputGenericParameterList(count) #>, TOutput> function;
+
+    /// <inheritdoc />
+    public FunctionNode(
+        Graph graph,
+<#
+        for (int i = 1; i <= count; i++)
+        {
+#>
+        Node<<#= GetInputGenericParameterName(i) #>> <#= GetInputParameterName(i) #>,
+<#
+        }
+#>
+        Func<<#= GetInputGenericParameterList(count) #>, TOutput> function) : base(graph)
+    {
+<#
+        for (int i = 1; i <= count; i++)
+        {
+#>
+        this.<#= GetInputParameterName(i) #> = Input(<#= GetInputParameterName(i) #>);
+<#
+        }
+#>
+
+        this.function = function;
+    }
+
+    /// <inheritdoc />
+    public override NodeOutput<TOutput> Compute()
+    {
+        return function(<#= string.Join(", ", Enumerable.Range(1, count).Select(i => $"{GetInputParameterName(i)}.Value")) #>);
+    }
+}
+<#
+    }
+#>

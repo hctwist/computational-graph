@@ -1,21 +1,26 @@
 ﻿using ComputationalGraph.Core;
 
-namespace ComputationalGraph.Nodes.General;
+namespace ComputationalGraph.Nodes.Fundamental;
 
 /// <summary>
 /// A node with a constant value.
 /// </summary>
 /// <typeparam name="TOutput">The output type.</typeparam>
-public class ConstantNode<TOutput> : Node<TOutput>
+[ExcludeFromPath]
+public sealed class ConstantNode<TOutput> : Node<TOutput>
 {
+    /// <inheritdoc />
+    public override string Name { get; }
+
     /// <summary>
     /// The constant output.
     /// </summary>
-    private readonly TOutput output;
+    private readonly NodeOutput<TOutput> output;
 
     /// <inheritdoc />
-    public ConstantNode(Graph graph, TOutput output) : base(graph)
+    public ConstantNode(Graph graph, NodeOutput<TOutput> output) : base(graph)
     {
+        Name = $"Constant ({output})";
         this.output = output;
     }
 

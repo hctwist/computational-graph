@@ -2,4 +2,4 @@
 
 namespace ComputationalGraph.Observing;
 
-public delegate void OnNodeFired(Node node, NodeOutput<string> output);
+public delegate void OnNodeFired(GraphNode node, NodeOutput<string> output);

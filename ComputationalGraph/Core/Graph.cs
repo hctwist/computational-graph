@@ -1,5 +1,6 @@
-﻿using ComputationalGraph.Exceptions;
-using ComputationalGraph.FirePaths;
+﻿using System.Reflection;
+using ComputationalGraph.Exceptions;
+using ComputationalGraph.Nodes.Fundamental;
 using ComputationalGraph.Observing;
 
 namespace ComputationalGraph.Core;
@@ -41,26 +42,35 @@ public class Graph
     /// The graph version. This increments every time an operation causes nodes to be fired.
     /// </summary>
     internal int Version;
-    
+
     /// <summary>
     /// All nodes in the graph.
     /// </summary>
-    private readonly HashSet<Node> nodes;
+    private readonly HashSet<GraphNode> allNodes;
 
     /// <summary>
-    /// The node inspector.
+    /// The path of nodes that can be fired. These are in firing order.
     /// </summary>
-    private readonly NodeInspector inspector;
+    /// <remarks>
+    /// This does not have to be every node belonging to the graph,
+    /// as some nodes are excluded from firing (for example <see cref="ConstantNode{TOutput}"/>).
+    /// </remarks>
+    private readonly List<GraphNode> pathNodes;
 
     /// <summary>
-    /// The fire path for a single node being fired.
+    /// Nodes that are excluded from the fire path.
     /// </summary>
-    private readonly FirePath singleFirePath;
+    private readonly List<GraphNode> pathExcludedNodes;
 
     /// <summary>
-    /// The fire path for a batch of nodes being fired.
+    /// The illegal node inspector.
     /// </summary>
-    private readonly BatchFirePath batchFirePath;
+    private readonly NodeInspector nodeInspector;
+
+    /// <summary>
+    /// The current batch of nodes to fire.
+    /// </summary>
+    private readonly HashSet<GraphNode> batchedNodes;
 
     /// <summary>
     /// The graph state.
@@ -73,11 +83,12 @@ public class Graph
     public Graph()
     {
         Version = 0;
-        
-        nodes = new HashSet<Node>();
-        inspector = new NodeInspector();
-        singleFirePath = new FirePath();
-        batchFirePath = new BatchFirePath();
+
+        allNodes = new HashSet<GraphNode>();
+        pathNodes = new List<GraphNode>();
+        pathExcludedNodes = new List<GraphNode>();
+        nodeInspector = new NodeInspector();
+        batchedNodes = new HashSet<GraphNode>();
 
         state = GraphState.Building;
     }
@@ -94,7 +105,7 @@ public class Graph
             StateChanged?.Invoke(value);
         }
     }
-    
+
     /// <summary>
     /// Primes the graph. This will pre-compute all node outputs and ready the graph for firing.
     /// </summary>
@@ -105,37 +116,19 @@ public class Graph
         {
             throw new InvalidGraphStateException($"Cannot prime a graph whilst in state {State}");
         }
-        
+
         StartFiring(GraphState.Priming);
 
-        HashSet<Node> nodesPrimed = new();
-        Stack<Node> nodesToPrime = new(nodes);
-        
-        while (nodesToPrime.TryPop(out Node? nodeToPrime))
+        // Fire excluded nodes, but don't trigger any side effects
+        foreach (GraphNode node in pathExcludedNodes)
         {
-            if (nodesPrimed.Contains(nodeToPrime))
-            {
-                continue;
-            }
+            node.Fire();
+        }
 
-            if (nodeToPrime.Inputs.All(inputNode => nodesPrimed.Contains(inputNode)))
-            {
-                nodeToPrime.Fire();
-                NodePrimed?.Invoke(nodeToPrime, GetDisplayOutput(nodeToPrime));
-
-                nodesPrimed.Add(nodeToPrime);
-                continue;
-            }
-
-            nodesToPrime.Push(nodeToPrime);
-
-            foreach (Node inputNode in nodeToPrime.Inputs)
-            {
-                if (!nodesPrimed.Contains(inputNode))
-                {
-                    nodesToPrime.Push(inputNode);
-                }
-            }
+        foreach (GraphNode node in pathNodes)
+        {
+            node.Fire();
+            NodePrimed?.Invoke(node, GetDisplayOutput(node));
         }
 
         EndFiring();
@@ -157,10 +150,22 @@ public class Graph
         batch();
 
         StartFiring(GraphState.Firing);
-        
-        Fire(batchFirePath);
-        batchFirePath.Clear();
 
+        // All nodes in the batch must have a path index (ie. be on the path)
+        int pathStart = batchedNodes.Min(n => n.PathIndex!.Value);
+
+        for (int i = pathStart; i < pathNodes.Count; i++)
+        {
+            GraphNode pathNode = pathNodes[i];
+
+            // Fire a node if it's part of the batch or its inputs were fired
+            if (batchedNodes.Contains(pathNode) || pathNode.ShouldFire())
+            {
+                Fire(pathNode);
+            }
+        }
+
+        batchedNodes.Clear();
         EndFiring();
     }
 
@@ -168,23 +173,32 @@ public class Graph
     /// Adds a node to the graph.
     /// </summary>
     /// <param name="node">The node.</param>
-    /// <returns>A unique identifier for the node.</returns>
+    /// <returns>The node's path index, or -1 if it wasn't added to the path.</returns>
     /// <exception cref="InvalidGraphStateException">Thrown if the graph is in an invalid state.</exception>
-    internal int AddNode(Node node)
+    internal int? AddNode(GraphNode node)
     {
         if (State != GraphState.Building)
         {
             throw new InvalidGraphStateException($"Cannot add a node to the graph whilst in state {State}");
         }
 
-        inspector.Inspect(node);
+        nodeInspector.Inspect(node.GetType());
 
-        if (!nodes.Add(node))
+        if (!allNodes.Add(node))
         {
             throw new InvalidOperationException($"Node {node.Name} already added to the graph");
         }
 
-        return nodes.Count - 1;
+        if (node.GetType().GetCustomAttribute<ExcludeFromPathAttribute>() is not null)
+        {
+            pathExcludedNodes.Add(node);
+            return null;
+        }
+        else
+        {
+            pathNodes.Add(node);
+            return pathNodes.Count - 1;
+        }
     }
 
     /// <summary>
@@ -192,14 +206,19 @@ public class Graph
     /// </summary>
     /// <param name="node">The node to fire.</param>
     /// <exception cref="InvalidGraphStateException">Thrown if the graph is in an invalid state.</exception>
-    internal void Fire(Node node)
+    internal void FireFrom(GraphNode node)
     {
+        if (node.PathIndex is not int pathIndex)
+        {
+            throw new InvalidOperationException("Tried to fire from a node that isn't on the fire path");
+        }
+
         if (State == GraphState.Batching)
         {
-            batchFirePath.Add(node);
+            batchedNodes.Add(node);
             return;
         }
-        
+
         if (State != GraphState.Idle)
         {
             throw new InvalidGraphStateException($"Cannot fire a node whilst the graph is in state {State}");
@@ -207,10 +226,36 @@ public class Graph
 
         StartFiring(GraphState.Firing);
 
-        singleFirePath.Populate(node);
-        Fire(singleFirePath);
+        // Fire the source node
+        Fire(node);
+
+        // Fire any necessary nodes after the node being fired
+        for (int i = pathIndex + 1; i < pathNodes.Count; i++)
+        {
+            GraphNode pathNode = pathNodes[i];
+
+            // Fire a node only if its inputs were fired
+            if (pathNode.ShouldFire())
+            {
+                Fire(pathNode);
+            }
+        }
 
         EndFiring();
+    }
+
+    /// <summary>
+    /// Fires a single node.
+    /// </summary>
+    /// <param name="node">The node.</param>
+    private void Fire(GraphNode node)
+    {
+        node.Fire();
+
+        if (NodeFired is not null)
+        {
+            NodeFired(node, GetDisplayOutput(node));
+        }
     }
 
     /// <summary>
@@ -233,25 +278,11 @@ public class Graph
     }
 
     /// <summary>
-    /// Fires a collection of nodes.
-    /// </summary>
-    /// <remarks>This fires individual nodes only, no paths are formed.</remarks>
-    /// <param name="nodes">The nodes to fire.</param>
-    private void Fire(IEnumerable<Node> nodes)
-    {
-        foreach (Node pathNode in nodes)
-        {
-            pathNode.Fire();
-            NodeFired?.Invoke(pathNode, GetDisplayOutput(pathNode));
-        }
-    }
-
-    /// <summary>
     /// Gets the display output for a node.
     /// </summary>
     /// <param name="node">The node.</param>
     /// <returns>The display output.</returns>
-    private static NodeOutput<string> GetDisplayOutput(Node node)
+    private static NodeOutput<string> GetDisplayOutput(GraphNode node)
     {
         return node.LastHadOutput ? NodeOutput<string>.From(node.LastDisplayOutput) : NodeOutput<string>.Nothing();
     }

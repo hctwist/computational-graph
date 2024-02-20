@@ -38,7 +38,7 @@ public sealed class SourceNode<TOutput> : Node<TOutput>
     public void Fire(NodeOutput<TOutput> value)
     {
         output = value;
-        Graph.Fire(this);
+        Graph.FireFrom(this);
     }
 
     /// <inheritdoc />

@@ -1,7 +1,7 @@
 ﻿using ComputationalGraph.Core;
 using ComputationalGraph.Nodes.BuildingBlocks;
 
-namespace ComputationalGraph.Nodes.General;
+namespace ComputationalGraph.Nodes.Math;
 
 public class MinNode<TInput> : AggregateNode<TInput, TInput>
 {

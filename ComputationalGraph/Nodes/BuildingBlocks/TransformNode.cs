@@ -4,7 +4,7 @@ namespace ComputationalGraph.Nodes.BuildingBlocks;
 
 public abstract class TransformNode<TInput, TOutput> : Node<TOutput>
 {
-    private readonly InputNode<TInput> inputNode;
+    private readonly NodeInput<TInput> inputNode;
 
     /// <inheritdoc />
     protected TransformNode(Graph graph, Node<TInput> inputNode) : base(graph)

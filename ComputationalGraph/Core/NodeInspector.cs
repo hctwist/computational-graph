@@ -4,7 +4,7 @@ using ComputationalGraph.Exceptions;
 namespace ComputationalGraph.Core;
 
 /// <summary>
-/// Inspector for node validity.
+/// Examines nodes for legality.
 /// </summary>
 public class NodeInspector
 {
@@ -38,16 +38,16 @@ public class NodeInspector
     /// <summary>
     /// Inspects a node.
     /// </summary>
-    /// <param name="node">The node.</param>
-    /// <exception cref="IllegalNodeException"></exception>
+    /// <param name="nodeType">The node.</param>
+    /// <exception cref="IllegalNodeException">Thrown if the node is deemed illegal.</exception>
     // TODO Check for capturing nodes in closures
-    public void Inspect(Node node)
+    public void Inspect(Type nodeType)
     {
         stack.Clear();
         encounteredTypes.Clear();
         
         // Check all direct node fields up to the base node
-        foreach (Type nodeField in GetFieldsWithInheritance(node.GetType(), typeof(Node<>)))
+        foreach (Type nodeField in GetFieldsWithInheritance(nodeType, typeof(Node<>)))
         {
             stack.Push(nodeField);
         }
@@ -71,7 +71,7 @@ public class NodeInspector
 
             if (IsNode(type))
             {
-                throw new IllegalNodeException($"Node {node.Name} has another node as an eventual field ({type.Name})");
+                throw new IllegalNodeException($"Node {nodeType.Name} has another node as an eventual field ({type.Name})");
             }
 
             foreach (Type mentionedType in GetMentionedTypes(type))
@@ -87,7 +87,7 @@ public class NodeInspector
             encounteredTypes.Add(type);
         }
 
-        safeTypes.Add(node.GetType());
+        safeTypes.Add(nodeType);
 
         // Mark all encountered types as safe, as they've now been checked
         foreach (Type encounteredType in encounteredTypes)
@@ -154,7 +154,7 @@ public class NodeInspector
     /// <returns>True if the type is a node, false otherwise.</returns>
     private static bool IsNode(Type type)
     {
-        return type.IsAssignableTo(typeof(Node));
+        return type.IsAssignableTo(typeof(GraphNode));
     }
 
     /// <summary>
@@ -164,6 +164,6 @@ public class NodeInspector
     /// <returns>True if the type is an input node, false otherwise.</returns>
     private static bool IsInputNode(Type type)
     {
-        return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(InputNode<>);
+        return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(NodeInput<>);
     }
 }

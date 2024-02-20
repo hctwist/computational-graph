@@ -1,17 +1,17 @@
 # Computational Graph
 
-Simple framework for specifying and evaluating [computational graphs](https://en.wikipedia.org/wiki/Directed_graph) in C#.
+Simple framework for specifying and evaluating [computational graphs](https://en.wikipedia.org/wiki/Directed_graph) in
+C#.
 
 ## The Purpose
 
 Large, multi-step computations with complex dependencies are relatively difficult to manage safely and efficiently.
 Building computations inside the graph framework gives you a few main benefits:
 
-- Safe dependencies - nodes are guaranteed to re-compute if their inputs change and this will propogate through the graph
-- Computation order is optimised to eliminate redundant computations
-- Computation is isolated to the subgraphs in which a dependency changed, leading to less expensive computations
-- Easier to specify and change external parameters leading to re-computation
-- Nodes lend themselves to being easily testable
+- Safe dependencies - nodes are guaranteed to re-compute if their inputs change and this will propagate through the
+  graph
+- Computation is optimised and isolated to the subgraphs in which a dependency changed
+- A node based architecture lends itself to being easily testable
 
 ## Usage
 
@@ -20,6 +20,7 @@ Let's create a graph representing the simple equation:
 ```math
 (x + y) * z
 ```
+
 For this we first need a graph:
 
 ```csharp
@@ -58,7 +59,6 @@ NodeOutput<int> output = multiplication.Output; // 9, ie. (1 + 2) * 3
 
 *There is an unexplained step here (`graph.Prime()`) which is covered later in [Priming](#priming)*.
 
-
 # The Basics
 
 ## Graph
@@ -68,7 +68,8 @@ nodes (the edges) and calculating optimal paths in which nodes can be computed.
 
 ### Priming
 
-Before a node can be fired, every node has to be computed for initial values. This step is called priming and is done via
+Before a node can be fired, every node has to be computed for initial values. This step is called priming and is done
+via
 the `Graph.Prime` method:
 
 ```csharp
@@ -77,14 +78,15 @@ graph.Prime();
 
 Priming **must** be done before firing any nodes, and nodes **cannot** be added to a graph after it has been primed.
 
-### Fire Paths
+### Firing
 
-When a node is fired, the graph creates a 'fire path' which determines the order of individual nodes to compute.
-This is constructed based on the dependencies between nodes and guarantees that:
-- No nodes will be computed twice
-- Only nodes of which their input's have changed will be computed
+When a node is fired, the graph determines a path to fire nodes. This is constructed based on the dependencies between
+nodes and guarantees that all inputs have been fired before dependents are computed.
 
-If a node outputs nothing, then the fire path will short circuit and all dependent nodes in the path will also output nothing.
+### Short Circuiting and Fallback
+
+If a node outputs nothing, then the fire path will short circuit and all dependent nodes in the path will also output
+nothing. It follows that if any of a node's inputs output nothing, it will not be computed.
 
 ## Nodes
 
@@ -119,7 +121,7 @@ When a node is constructed, it is required to provide a graph which it will be a
 
 ### Dependencies
 
-Node dependencies are created via defining inputs. In the constructor of a node, its inputs should be registered via
+Node dependencies are created by defining inputs. In the constructor of a node, its inputs should be registered via
 the `Input` method as shown here:
 
 ```csharp
@@ -135,7 +137,7 @@ by `Input` can be held, which provides the input node's output during `Compute`.
 ### Compute
 
 Every node represents a computation, which is defined in the `Compute` method. This is the only place in which input
-values should be accessed.
+values can be safely accessed.
 
 ```csharp
 public override NodeOutput<int> Compute()
@@ -162,6 +164,18 @@ or using the shorthand `Nothing` method:
 ```csharp
 return NodeOuptut<int>.Nothing();
 return Nothing();
+```
+
+### Fallback Output
+
+As noted in [short circuiting](#short-circuiting), nodes of which their inputs output nothing do not compute, but
+output a fallback value. To override this behaviour, nodes can specify a fallback node via a secondary constructor,
+which is used as output if the node would otherwise short circuit:
+
+```csharp
+public NodeWithFallback(Graph graph, Node<int> fallbackNode) : base(graph, fallbackNode)
+{
+}
 ```
 
 ___
@@ -193,30 +207,7 @@ sourceNode.Fire(8);
 sourceNode.Fire(NodeOutput<int>.Nothing();
 ```
 
-#### Default Node
-
-The default node (`DefaultNode<TOuptut>`) is the only node that can interrupt short circuiting of the graph.
-This node can be placed directly after a node that might return nothing and if it does, output a default value
-(therefore conceptually a default node should never output nothing).
-
-This node can be created with a single input node:
-
-```csharp
-SourceNode<int> inputNode = new(graph);
-DefaultNode<int> defaultNode = new(graph, inputNode, 8);
-```
-
-and will output the following:
-
-```csharp
-inputNode.Fire(NodeOutput<int>.Nothing());
-NodeOuptut<int> output1 = defaultNode.Output; // 8
-
-inputNode.Fire(0);
-NodeOuptut<int> output2 = defaultNode.Output; // 0
-```
-
-### Constant Node
+#### Constant Node
 
 The constant node is namely a node that outputs a fixed value.
 
@@ -224,6 +215,9 @@ The constant node is namely a node that outputs a fixed value.
 ConstantNode<int> constantNode = new(graph, 8);
 NodeOutput<int> output = constantNode.Output; // 8
 ```
+
+Although a custom constant node could be created, the included `ConstantNode<TOutput>` is optimised such that the
+graph doesn't consider it during firing.
 
 ### Building Block Nodes
 
@@ -243,6 +237,33 @@ public class AddNode : AggregateNode<int, int>
         return inputs.Sum();
     }
 }
+```
+
+### General Nodes
+
+#### Fallback Node
+
+The fallback node (`FallbackNode<TOuptut>`) provides more control over the fallback mechanism by allowing another node's
+output to be used as a fallback.
+
+For example:
+
+```csharp
+ConstantNode<int> otherNode = new(graph, 8);
+
+SourceNode<int> inputNode = new(graph);
+FallbackNode<int> guardedInputNode = new(graph, inputNode, otherNode);
+FallbackNode<int> guardedInputNode = inputNode.WithFallback(otherNode);
+```
+
+will output the following:
+
+```csharp
+inputNode.Fire(NodeOutput<int>.Nothing());
+NodeOuptut<int> output1 = guardedInputNode.Output; // 8
+
+inputNode.Fire(0);
+NodeOuptut<int> output2 = guardedInputNode.Output; // 0
 ```
 
 ## Batching
@@ -333,3 +354,35 @@ forbidden actions are:
 
 Graph cycles are not permitted and should be impossible to construct if nodes are always constructed with their inputs.
 Deferring registering inputs to create cycles or similar will lead to undefined behaviour.
+
+# Performance
+
+## Speed
+
+Firing nodes is lightweight. Paths are constructed when the graph is primed and guarantee that:
+
+- No node is computed twice
+- Nodes will be computed only if their inputs have been
+
+## Allocations
+
+Firing nodes in the graph is considered to be zero-allocation (no heap memory allocations), with two exceptions:
+
+- `Graph.NodePrimed`
+- `Graph.NodeFired`
+
+as these both give string outputs of the nodes. The other node firing events do not provide string output, so are safe.
+
+*Note that there are no allocation guarantees in the build or prime stage of the graph.*
+
+## Benchmarks
+
+The overhead in the framework is slight so should be dwarfed by compute logic in the nodes, but here are some simple
+benchmark results on firing empty nodes to get an idea of usage with a large number of nodes:
+
+| Nodes |         Mean |     Error |    StdDev | Allocated |
+|-------|-------------:|----------:|----------:|----------:|
+| 10    |     140.7 ns |   0.79 ns |   0.74 ns |         - |
+| 100   |   1,444.9 ns |   6.30 ns |   5.89 ns |         - |
+| 1000  |  15,085.9 ns | 280.22 ns | 262.12 ns |         - |
+| 10000 | 154,435.1 ns | 957.34 ns | 895.49 ns |         - |

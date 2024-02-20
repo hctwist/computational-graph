@@ -5,8 +5,8 @@ namespace ComputationalGraph.Nodes.Math;
 
 public class SubtractNode<TNumber> : Node<TNumber> where TNumber : INumber<TNumber>
 {
-    private readonly InputNode<TNumber> left;
-    private readonly InputNode<TNumber> right;
+    private readonly NodeInput<TNumber> left;
+    private readonly NodeInput<TNumber> right;
     
     /// <inheritdoc />
     public SubtractNode(Graph graph, Node<TNumber> left, Node<TNumber> right) : base(graph)

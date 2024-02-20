@@ -1,10 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <WarningsAsErrors>Nullable</WarningsAsErrors>
+        <LangVersion>default</LangVersion>
+        <TargetFramework>net7.0</TargetFramework>
     </PropertyGroup>
+
+    <ItemGroup>
+      <None Update="Nodes\General\FunctionNode.tt">
+        <Generator>TextTemplatingFileGenerator</Generator>
+        <LastGenOutput>FunctionNode.cs</LastGenOutput>
+      </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Nodes\General\FunctionNode.cs">
+        <AutoGen>True</AutoGen>
+        <DesignTime>True</DesignTime>
+        <DependentUpon>FunctionNode.tt</DependentUpon>
+      </Compile>
+    </ItemGroup>
 
 </Project>

@@ -19,10 +19,7 @@ public class GraphTests
         PassthroughNode<int> node3 = new(graph, node2);
         SourceNode<int> node4 = new(graph, 0);
         
-        List<Node<int>> nodes = new()
-        {
-            node0, node1, node2, node3, node4
-        };
+        List<Node<int>> nodes = [node0, node1, node2, node3, node4];
 
         nodes.Select(node => node.Output.HasOutput).Should().AllBeEquivalentTo(false);
         
@@ -41,10 +38,7 @@ public class GraphTests
         Graph graph = new();
 
         SourceNode<int> sourceNode = new(graph, 0);
-        List<Node<int>> nodes = new()
-        {
-            sourceNode
-        };
+        List<Node<int>> nodes = [sourceNode];
 
         for (int i = 0; i < nodeCount - 1; i++)
         {
@@ -53,7 +47,7 @@ public class GraphTests
         
         graph.Prime();
 
-        List<Node> firedNodes = new();
+        List<GraphNode> firedNodes = new();
 
         graph.NodeFired += (node, _) => firedNodes.Add(node);
         
@@ -68,10 +62,7 @@ public class GraphTests
         Graph graph = new();
 
         SourceNode<int> sourceNode = new(graph, 0);
-        List<Node<int>> nodes = new()
-        {
-            sourceNode
-        };
+        List<Node<int>> nodes = [sourceNode];
 
         for (int i = 0; i < nodeCount - 1; i++)
         {
@@ -80,7 +71,7 @@ public class GraphTests
         
         graph.Prime();
 
-        List<Node> firedNodes = new();
+        List<GraphNode> firedNodes = new();
 
         graph.NodeFired += (node, _) => firedNodes.Add(node);
         

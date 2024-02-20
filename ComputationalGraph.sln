@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputationalGraph", "Compu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputationalGraph.Tests", "ComputationalGraph.Tests\ComputationalGraph.Tests.csproj", "{980348DA-094E-475B-A3B3-6328D1EC7FC1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputationalGraph.Benchmarks", "ComputationalGraph.Benchmarks\ComputationalGraph.Benchmarks.csproj", "{86DE2FED-E564-4CC6-A83E-198558A14C04}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{980348DA-094E-475B-A3B3-6328D1EC7FC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{980348DA-094E-475B-A3B3-6328D1EC7FC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{980348DA-094E-475B-A3B3-6328D1EC7FC1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86DE2FED-E564-4CC6-A83E-198558A14C04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86DE2FED-E564-4CC6-A83E-198558A14C04}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86DE2FED-E564-4CC6-A83E-198558A14C04}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86DE2FED-E564-4CC6-A83E-198558A14C04}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

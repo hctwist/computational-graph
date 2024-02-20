@@ -4,7 +4,7 @@ namespace ComputationalGraph.Nodes.BuildingBlocks;
 
 public abstract class AggregateNode<TInput, TOutput> : Node<TOutput>
 {
-    private readonly IEnumerable<InputNode<TInput>> inputs;
+    private readonly IEnumerable<NodeInput<TInput>> inputs;
 
     /// <inheritdoc />
     protected AggregateNode(Graph graph, IEnumerable<Node<TInput>> inputs) : base(graph)
