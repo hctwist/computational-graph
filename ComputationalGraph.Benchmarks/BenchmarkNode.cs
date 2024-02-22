@@ -1,4 +1,5 @@
 ﻿using ComputationalGraph.Core;
+using ComputationalGraph.Nodes.Fundamental;
 
 namespace ComputationalGraph.Benchmarks;
 

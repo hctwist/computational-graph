@@ -5,7 +5,7 @@ using ComputationalGraph.Nodes.Fundamental;
 namespace ComputationalGraph.Benchmarks;
 
 [MemoryDiagnoser]
-public class SteppedGraphBenchmark
+public class SteppedGraphFireBenchmark
 {
     [Params(10, 100, 1_000, 10_000)]
     [SuppressMessage("ReSharper", "UnassignedField.Global")]
@@ -20,7 +20,7 @@ public class SteppedGraphBenchmark
     }
 
     [Benchmark]
-    public void Benchmark()
+    public void Fire()
     {
         sourceNode.Fire(0);
     }

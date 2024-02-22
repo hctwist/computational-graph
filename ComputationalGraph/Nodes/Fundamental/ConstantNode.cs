@@ -6,7 +6,7 @@ namespace ComputationalGraph.Nodes.Fundamental;
 /// A node with a constant value.
 /// </summary>
 /// <typeparam name="TOutput">The output type.</typeparam>
-[ExcludeFromPath]
+[ConstantOutput]
 public sealed class ConstantNode<TOutput> : Node<TOutput>
 {
     /// <inheritdoc />

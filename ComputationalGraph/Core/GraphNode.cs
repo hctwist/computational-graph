@@ -16,9 +16,14 @@ public abstract class GraphNode
     public abstract bool WasFired { get; }
     
     /// <summary>
-    /// Gets the node's index in the graph's fire path, or null if it isn't in the path.
+    /// Gets or sets the node's index in the graph's fire path, or null if it isn't in the path.
     /// </summary>
-    internal abstract int? PathIndex { get; }
+    internal int? PathIndex { get; set; }
+    
+    /// <summary>
+    /// Gets the node's inputs.
+    /// </summary>
+    internal abstract IReadOnlySet<GraphNode> Inputs { get; }
 
     /// <summary>
     /// Gets whether the node had output last time it was fired.

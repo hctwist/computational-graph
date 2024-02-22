@@ -28,9 +28,6 @@ public abstract class Node<TOutput> : GraphNode
     /// <inheritdoc />
     public override string Name { get; }
 
-    /// <inheritdoc />
-    internal override int? PathIndex { get; }
-
     /// <summary>
     /// The node's version, or null if the node hasn't been fired.
     /// </summary>
@@ -66,10 +63,9 @@ public abstract class Node<TOutput> : GraphNode
 
         LastOutput = Nothing();
 
-        int? pathIndex = graph.AddNode(this);
-        PathIndex = pathIndex;
+        graph.AddNode(this);
         
-        Name = $"{GetType().Name}[{pathIndex}]";
+        Name = GetType().Name;
 
         version = null;
         
@@ -101,6 +97,9 @@ public abstract class Node<TOutput> : GraphNode
 
     /// <inheritdoc/>
     public override bool WasFired => version == Graph.Version;
+
+    /// <inheritdoc />
+    internal override IReadOnlySet<GraphNode> Inputs => inputs;
 
     /// <inheritdoc />
     internal sealed override bool LastHadOutput => LastOutput.HasOutput;
@@ -166,16 +165,6 @@ public abstract class Node<TOutput> : GraphNode
         if (Graph.State != GraphState.Building)
         {
             throw new InvalidGraphStateException($"Tried to add node {inputNode.Name} as an input to node {Name} whilst the graph is {Graph.State}");
-        }
-
-        // Make sure the node is before this one on the path
-        if (inputNode.PathIndex is int inputNodePathIndex && inputNodePathIndex >= PathIndex)
-        {
-            throw new InvalidNodeInputException(
-                $"""
-                 Node {inputNode} cannot be added as an input to node {Name} as it doesn't sit before it in the graph.
-                 This could be because the node was created whilst constructing this node, or this is being called post-construction
-                 """);
         }
 
         if (!inputs.Add(inputNode))

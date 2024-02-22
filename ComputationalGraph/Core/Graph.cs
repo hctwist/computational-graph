@@ -1,6 +1,4 @@
-﻿using System.Reflection;
-using ComputationalGraph.Exceptions;
-using ComputationalGraph.Nodes.Fundamental;
+﻿using ComputationalGraph.Exceptions;
 using ComputationalGraph.Observing;
 
 namespace ComputationalGraph.Core;
@@ -49,18 +47,9 @@ public class Graph
     private readonly HashSet<GraphNode> allNodes;
 
     /// <summary>
-    /// The path of nodes that can be fired. These are in firing order.
+    /// The fire path, or null if the graph hasn't been primed.
     /// </summary>
-    /// <remarks>
-    /// This does not have to be every node belonging to the graph,
-    /// as some nodes are excluded from firing (for example <see cref="ConstantNode{TOutput}"/>).
-    /// </remarks>
-    private readonly List<GraphNode> pathNodes;
-
-    /// <summary>
-    /// Nodes that are excluded from the fire path.
-    /// </summary>
-    private readonly List<GraphNode> pathExcludedNodes;
+    private FirePath? firePath;
 
     /// <summary>
     /// The illegal node inspector.
@@ -85,8 +74,7 @@ public class Graph
         Version = 0;
 
         allNodes = new HashSet<GraphNode>();
-        pathNodes = new List<GraphNode>();
-        pathExcludedNodes = new List<GraphNode>();
+        firePath = null;
         nodeInspector = new NodeInspector();
         batchedNodes = new HashSet<GraphNode>();
 
@@ -118,15 +106,20 @@ public class Graph
         }
 
         StartFiring(GraphState.Priming);
-
-        // Fire excluded nodes, but don't trigger any side effects
-        foreach (GraphNode node in pathExcludedNodes)
+        
+        firePath = FirePath.Create(allNodes);
+        
+        foreach (GraphNode node in firePath.ConstantOutputPath)
         {
+            node.PathIndex = null;
             node.Fire();
+            NodePrimed?.Invoke(node, GetDisplayOutput(node));
         }
 
-        foreach (GraphNode node in pathNodes)
+        for (int i = 0; i < firePath.Path.Count; i++)
         {
+            GraphNode node = firePath.Path[i];
+            node.PathIndex = i;
             node.Fire();
             NodePrimed?.Invoke(node, GetDisplayOutput(node));
         }
@@ -154,9 +147,9 @@ public class Graph
         // All nodes in the batch must have a path index (ie. be on the path)
         int pathStart = batchedNodes.Min(n => n.PathIndex!.Value);
 
-        for (int i = pathStart; i < pathNodes.Count; i++)
+        for (int i = pathStart; i < firePath!.Path.Count; i++)
         {
-            GraphNode pathNode = pathNodes[i];
+            GraphNode pathNode = firePath!.Path[i];
 
             // Fire a node if it's part of the batch or its inputs were fired
             if (batchedNodes.Contains(pathNode) || pathNode.ShouldFire())
@@ -175,7 +168,7 @@ public class Graph
     /// <param name="node">The node.</param>
     /// <returns>The node's path index, or -1 if it wasn't added to the path.</returns>
     /// <exception cref="InvalidGraphStateException">Thrown if the graph is in an invalid state.</exception>
-    internal int? AddNode(GraphNode node)
+    internal void AddNode(GraphNode node)
     {
         if (State != GraphState.Building)
         {
@@ -187,17 +180,6 @@ public class Graph
         if (!allNodes.Add(node))
         {
             throw new InvalidOperationException($"Node {node.Name} already added to the graph");
-        }
-
-        if (node.GetType().GetCustomAttribute<ExcludeFromPathAttribute>() is not null)
-        {
-            pathExcludedNodes.Add(node);
-            return null;
-        }
-        else
-        {
-            pathNodes.Add(node);
-            return pathNodes.Count - 1;
         }
     }
 
@@ -230,9 +212,9 @@ public class Graph
         Fire(node);
 
         // Fire any necessary nodes after the node being fired
-        for (int i = pathIndex + 1; i < pathNodes.Count; i++)
+        for (int i = pathIndex + 1; i < firePath!.Path.Count; i++)
         {
-            GraphNode pathNode = pathNodes[i];
+            GraphNode pathNode = firePath!.Path[i];
 
             // Fire a node only if its inputs were fired
             if (pathNode.ShouldFire())
@@ -251,11 +233,7 @@ public class Graph
     private void Fire(GraphNode node)
     {
         node.Fire();
-
-        if (NodeFired is not null)
-        {
-            NodeFired(node, GetDisplayOutput(node));
-        }
+        NodeFired?.Invoke(node, GetDisplayOutput(node));
     }
 
     /// <summary>
