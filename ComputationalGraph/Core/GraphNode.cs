@@ -8,7 +8,7 @@ public abstract class GraphNode
     /// <summary>
     /// Gets the name of the node.
     /// </summary>
-    public abstract string Name { get; }
+    public string Name { get; init; }
 
     /// <summary>
     /// Gets whether the node was fired in the latest graph fire.
@@ -44,4 +44,12 @@ public abstract class GraphNode
     /// Fires this node.
     /// </summary>
     internal abstract void Fire();
+
+    /// <summary>
+    /// Creates a new <see cref="GraphNode"/>.
+    /// </summary>
+    protected GraphNode()
+    {
+        Name = GetType().Name;
+    }
 }

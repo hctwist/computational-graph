@@ -1,78 +1,121 @@
 ﻿using System.Reflection;
+using ComputationalGraph.Exceptions;
 using ComputationalGraph.Nodes.Fundamental;
 
 namespace ComputationalGraph.Core;
 
-public class FirePath
+/// <summary>
+/// Graph fire path.
+/// </summary>
+internal class FirePath
 {
-    public readonly IReadOnlyList<GraphNode> Path;
+    /// <summary>
+    /// The (non-constant) path.
+    /// </summary>
+    private readonly List<GraphNode> path;
 
-    public readonly IReadOnlyCollection<GraphNode> ConstantOutputPath;
+    /// <summary>
+    /// Nodes with constant output.
+    /// </summary>
+    private readonly List<GraphNode> constantOutputNodes;
 
-    public FirePath(IReadOnlyList<GraphNode> path, IReadOnlyCollection<GraphNode> constantOutputPath)
+    /// <summary>
+    /// Creates a new <see cref="FirePath"/>.
+    /// </summary>
+    public FirePath()
     {
-        Path = path;
-        ConstantOutputPath = constantOutputPath;
+        path = new List<GraphNode>();
+        constantOutputNodes = new List<GraphNode>();
     }
 
-    public static FirePath Create(ISet<GraphNode> nodes)
+    /// <summary>
+    /// Gets the current fire path.
+    /// </summary>
+    public IReadOnlyList<GraphNode> Path => path;
+
+    /// <summary>
+    /// Gets the nodes with constant output.
+    /// </summary>
+    /// <remarks>These are excluded from <see cref="Path"/>.</remarks>
+    public IReadOnlyCollection<GraphNode> ConstantOutputNodes => constantOutputNodes;
+
+    /// <summary>
+    /// Adds a node to the path.
+    /// </summary>
+    /// <param name="node">The node.</param>
+    /// <remarks>This will be added to the end of the path before calling <see cref="Resolve"/>.</remarks>
+    public void Add(GraphNode node)
     {
-        Dictionary<GraphNode, int> depths = new(nodes.Count);
-
-        Queue<GraphNode> nodesToResolve = new(nodes);
-
-        while (nodesToResolve.TryDequeue(out GraphNode? node))
+        if (HasConstantOutput(node))
         {
-            if (!TryGetInputDepth(node, depths, out int inputDepth))
+            constantOutputNodes.Add(node);
+        }
+        else
+        {
+            path.Add(node);
+        }
+    }
+
+    /// <summary>
+    /// Sorts the fire path so that all dependencies are resolved in the correct order.
+    /// </summary>
+    /// <exception cref="GraphCycleException">Thrown if there is a cycle in the path.</exception>
+    public void Resolve()
+    {
+        // Constant output nodes are implicitly resolved
+        HashSet<GraphNode> resolved = new(constantOutputNodes);
+        
+        // The stack of nodes to resolve
+        Stack<GraphNode> nodesToResolve = new(Enumerable.Reverse(path));
+
+        // Keep track of all encountered input nodes, that haven't yet been resolved
+        HashSet<GraphNode> unresolvedInputs = new();
+        
+        // Clear the path and repopulate with the resolved nodes
+        path.Clear();
+        
+        while (nodesToResolve.TryPeek(out GraphNode? nodeToResolve))
+        {
+            // Skip the node if already resolved
+            if (resolved.Contains(nodeToResolve))
             {
-                nodesToResolve.Enqueue(node);
+                nodesToResolve.Pop();
                 continue;
             }
 
-            depths.Add(node, inputDepth + 1);
-        }
+            bool allInputsResolved = true;
 
-        IEnumerable<GraphNode> orderedNodes = depths
-            .OrderBy(nodeWithDepth => nodeWithDepth.Value)
-            .Select(nodeWithDepth => nodeWithDepth.Key);
-
-        List<GraphNode> path = new(nodes.Count);
-        List<GraphNode> constantOutputPath = new();
-        
-        foreach (GraphNode node in orderedNodes)
-        {
-            if (HasConstantOutput(node))
+            foreach (GraphNode input in nodeToResolve.Inputs)
             {
-                constantOutputPath.Add(node);
+                // If the input has been encountered already and was unresolved, there must be a cycle
+                if (unresolvedInputs.Contains(input))
+                {
+                    throw new GraphCycleException($"Cycle detected with node {input.Name}. This is not supported by the fire path");
+                }
+                
+                // If the input hasn't been resolved, push it onto the stack to resolve
+                if (!resolved.Contains(input))
+                {
+                    allInputsResolved = false;
+                    nodesToResolve.Push(input);
+                    unresolvedInputs.Add(input);
+                }
             }
-            else
+
+            if (allInputsResolved)
             {
-                path.Add(node);
+                // Add the node to the final path if resolved
+                path.Add(nodeToResolve);
+                
+                resolved.Add(nodeToResolve);
+                nodesToResolve.Pop();
+                unresolvedInputs.Remove(nodeToResolve);
             }
         }
-
-        return new FirePath(path, constantOutputPath);
     }
 
     private static bool HasConstantOutput(GraphNode node)
     {
         return node.GetType().GetCustomAttribute<ConstantOutputAttribute>() is not null;
-    }
-
-    private static bool TryGetInputDepth(GraphNode node, Dictionary<GraphNode, int> depths, out int inputDepth)
-    {
-        inputDepth = 0;
-
-        foreach (GraphNode input in node.Inputs)
-        {
-            if (!depths.TryGetValue(input, out int depth))
-            {
-                return false;
-            }
-
-            inputDepth = Math.Max(inputDepth, depth);
-        }
-
-        return true;
     }
 }

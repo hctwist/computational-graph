@@ -47,9 +47,9 @@ public class Graph
     private readonly HashSet<GraphNode> allNodes;
 
     /// <summary>
-    /// The fire path, or null if the graph hasn't been primed.
+    /// The fire path.
     /// </summary>
-    private FirePath? firePath;
+    private readonly FirePath firePath;
 
     /// <summary>
     /// The illegal node inspector.
@@ -74,7 +74,7 @@ public class Graph
         Version = 0;
 
         allNodes = new HashSet<GraphNode>();
-        firePath = null;
+        firePath = new FirePath();
         nodeInspector = new NodeInspector();
         batchedNodes = new HashSet<GraphNode>();
 
@@ -106,10 +106,10 @@ public class Graph
         }
 
         StartFiring(GraphState.Priming);
-        
-        firePath = FirePath.Create(allNodes);
-        
-        foreach (GraphNode node in firePath.ConstantOutputPath)
+
+        firePath.Resolve();
+
+        foreach (GraphNode node in firePath.ConstantOutputNodes)
         {
             node.PathIndex = null;
             node.Fire();
@@ -147,9 +147,9 @@ public class Graph
         // All nodes in the batch must have a path index (ie. be on the path)
         int pathStart = batchedNodes.Min(n => n.PathIndex!.Value);
 
-        for (int i = pathStart; i < firePath!.Path.Count; i++)
+        for (int i = pathStart; i < firePath.Path.Count; i++)
         {
-            GraphNode pathNode = firePath!.Path[i];
+            GraphNode pathNode = firePath.Path[i];
 
             // Fire a node if it's part of the batch or its inputs were fired
             if (batchedNodes.Contains(pathNode) || pathNode.ShouldFire())
@@ -181,6 +181,8 @@ public class Graph
         {
             throw new InvalidOperationException($"Node {node.Name} already added to the graph");
         }
+
+        firePath.Add(node);
     }
 
     /// <summary>
@@ -212,9 +214,9 @@ public class Graph
         Fire(node);
 
         // Fire any necessary nodes after the node being fired
-        for (int i = pathIndex + 1; i < firePath!.Path.Count; i++)
+        for (int i = pathIndex + 1; i < firePath.Path.Count; i++)
         {
-            GraphNode pathNode = firePath!.Path[i];
+            GraphNode pathNode = firePath.Path[i];
 
             // Fire a node only if its inputs were fired
             if (pathNode.ShouldFire())

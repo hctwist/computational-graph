@@ -9,9 +9,6 @@ namespace ComputationalGraph.Nodes.Fundamental;
 [ConstantOutput]
 public sealed class ConstantNode<TOutput> : Node<TOutput>
 {
-    /// <inheritdoc />
-    public override string Name { get; }
-
     /// <summary>
     /// The constant output.
     /// </summary>

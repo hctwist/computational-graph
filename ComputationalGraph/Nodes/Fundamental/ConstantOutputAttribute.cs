@@ -1,4 +1,4 @@
 ﻿namespace ComputationalGraph.Nodes.Fundamental;
 
-[AttributeUsage(AttributeTargets.Class, Inherited = true)]
+[AttributeUsage(AttributeTargets.Class)]
 internal class ConstantOutputAttribute : Attribute;

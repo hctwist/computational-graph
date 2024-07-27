@@ -11,7 +11,9 @@ public class NodeInput<TOutput>
     /// <summary>
     /// The node providing input.
     /// </summary>
+#pragma warning disable CGRAPH0001
     private readonly Node<TOutput> backingNode;
+#pragma warning restore CGRAPH0001
 
     /// <summary>
     /// Creates a new <see cref="NodeInput{TOutput}"/>.

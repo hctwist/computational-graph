@@ -21,12 +21,10 @@ public abstract class Node<TOutput> : GraphNode
     public readonly Graph Graph;
 
     /// <summary>
-    /// The last output of this node.
+    /// Gets the last output of this node.
     /// </summary>
-    internal NodeOutput<TOutput> LastOutput;
-
-    /// <inheritdoc />
-    public override string Name { get; }
+    /// <remarks>This is <see cref="NodeOutput{TOutput}.Nothing"/> before the node is fired.</remarks>
+    internal NodeOutput<TOutput> LastOutput { get; private set; }
 
     /// <summary>
     /// The node's version, or null if the node hasn't been fired.
@@ -41,14 +39,16 @@ public abstract class Node<TOutput> : GraphNode
     /// <summary>
     /// The fallback node, or null if there is no fallback.
     /// </summary>
+#pragma warning disable CGRAPH0001
     private readonly Node<TOutput>? fallbackNode;
+#pragma warning restore CGRAPH0001
 
     /// <summary>
     /// Creates a new <see cref="Node{TOutput}"/>.
     /// </summary>
     /// <param name="graph">The graph to add this node to.</param>
     /// <param name="fallback">The fallback output.</param>
-    protected Node(Graph graph, TOutput fallback) : this(graph, new ConstantNode<TOutput>(graph, fallback))
+    protected Node(Graph graph, NodeOutput<TOutput> fallback) : this(graph, new ConstantNode<TOutput>(graph, fallback))
     {
     }
 
@@ -65,8 +65,6 @@ public abstract class Node<TOutput> : GraphNode
 
         graph.AddNode(this);
         
-        Name = GetType().Name;
-
         version = null;
         
         inputs = new HashSet<GraphNode>();
@@ -86,7 +84,7 @@ public abstract class Node<TOutput> : GraphNode
     {
         get
         {
-            if (Graph.State is GraphState.Firing or GraphState.Priming)
+            if (Graph.State is not GraphState.Idle)
             {
                 throw new InvalidGraphStateException($"Attempted to read output whilst the graph was {Graph.State}");
             }

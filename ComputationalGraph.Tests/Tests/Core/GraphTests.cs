@@ -21,8 +21,6 @@ public class GraphTests
         
         List<Node<int>> nodes = [node0, node1, node2, node3, node4];
 
-        nodes.Select(node => node.Output.HasOutput).Should().AllBeEquivalentTo(false);
-        
         graph.Prime();
         
         nodes.Select(node => node.Output.HasOutput).Should().AllBeEquivalentTo(true);
@@ -34,30 +32,6 @@ public class GraphTests
     [DataRow(100)]
     [TestMethod]
     public void Fire_NodeChain_FiresInOrder(int nodeCount)
-    {
-        Graph graph = new();
-
-        SourceNode<int> sourceNode = new(graph, 0);
-        List<Node<int>> nodes = [sourceNode];
-
-        for (int i = 0; i < nodeCount - 1; i++)
-        {
-            nodes.Add(new PassthroughNode<int>(graph, nodes[^1]));
-        }
-        
-        graph.Prime();
-
-        List<GraphNode> firedNodes = new();
-
-        graph.NodeFired += (node, _) => firedNodes.Add(node);
-        
-        sourceNode.Fire(0);
-
-        firedNodes.Should().Equal(nodes);
-    }
-    
-    [TestMethod]
-    public void Fire__FiresInOrder(int nodeCount)
     {
         Graph graph = new();
 
