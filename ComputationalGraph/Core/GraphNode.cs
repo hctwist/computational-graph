@@ -9,6 +9,11 @@ public abstract class GraphNode
     /// Gets the name of the node.
     /// </summary>
     public string Name { get; init; }
+    
+    /// <summary>
+    /// Gets the node's display output.
+    /// </summary>
+    public abstract NodeOutput<string?> DisplayOutput { get; }
 
     /// <summary>
     /// Gets whether the node was fired in the latest graph fire.
@@ -16,14 +21,14 @@ public abstract class GraphNode
     public abstract bool WasFired { get; }
     
     /// <summary>
+    /// Gets the node's inputs.
+    /// </summary>
+    public abstract IReadOnlySet<GraphNode> Inputs { get; }
+    
+    /// <summary>
     /// Gets or sets the node's index in the graph's fire path, or null if it isn't in the path.
     /// </summary>
     internal int? PathIndex { get; set; }
-    
-    /// <summary>
-    /// Gets the node's inputs.
-    /// </summary>
-    internal abstract IReadOnlySet<GraphNode> Inputs { get; }
 
     /// <summary>
     /// Gets whether the node had output last time it was fired.
@@ -31,9 +36,9 @@ public abstract class GraphNode
     internal abstract bool LastHadOutput { get; }
 
     /// <summary>
-    /// Gets the node's last display output.
+    /// Gets the node's last display output value.
     /// </summary>
-    internal abstract string LastDisplayOutput { get; }
+    internal abstract string? LastDisplayOutputValue { get; }
 
     /// <summary>
     /// Determines whether this node should fire.

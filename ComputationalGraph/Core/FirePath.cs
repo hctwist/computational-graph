@@ -24,8 +24,8 @@ internal class FirePath
     /// </summary>
     public FirePath()
     {
-        path = new List<GraphNode>();
-        constantOutputNodes = new List<GraphNode>();
+        path = [];
+        constantOutputNodes = [];
     }
 
     /// <summary>
@@ -63,13 +63,13 @@ internal class FirePath
     public void Resolve()
     {
         // Constant output nodes are implicitly resolved
-        HashSet<GraphNode> resolved = new(constantOutputNodes);
+        HashSet<GraphNode> resolved = [..constantOutputNodes];
         
         // The stack of nodes to resolve
         Stack<GraphNode> nodesToResolve = new(Enumerable.Reverse(path));
 
         // Keep track of all encountered input nodes, that haven't yet been resolved
-        HashSet<GraphNode> unresolvedInputs = new();
+        HashSet<GraphNode> unresolvedInputs = [];
         
         // Clear the path and repopulate with the resolved nodes
         path.Clear();

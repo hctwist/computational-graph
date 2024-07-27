@@ -11,7 +11,7 @@ Building computations inside the graph framework gives you a few main benefits:
 - Safe dependencies - nodes are guaranteed to re-compute if their inputs change and this will propagate through the
   graph
 - Computation is optimised and isolated to the subgraphs in which a dependency changed
-- A node based architecture lends itself to being easily testable
+- A node-based architecture lends itself to being easily testable
 
 ## Usage
 

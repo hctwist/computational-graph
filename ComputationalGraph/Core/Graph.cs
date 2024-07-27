@@ -95,6 +95,23 @@ public class Graph
     }
 
     /// <summary>
+    /// Gets all nodes registered to this graph.
+    /// </summary>
+    /// <exception cref="InvalidGraphStateException">Thrown if the graph is still building.</exception>
+    public IReadOnlySet<GraphNode> AllNodes
+    {
+        get
+        {
+            if (State is GraphState.Building)
+            {
+                throw new InvalidGraphStateException("Cannot access graph nodes before the graph is built");
+            }
+            
+            return allNodes;
+        }
+    }
+
+    /// <summary>
     /// Primes the graph. This will pre-compute all node outputs and ready the graph for firing.
     /// </summary>
     /// <exception cref="InvalidGraphStateException">Thrown if the graph is in an invalid state.</exception>
@@ -262,8 +279,8 @@ public class Graph
     /// </summary>
     /// <param name="node">The node.</param>
     /// <returns>The display output.</returns>
-    private static NodeOutput<string> GetDisplayOutput(GraphNode node)
+    private static NodeOutput<string?> GetDisplayOutput(GraphNode node)
     {
-        return node.LastHadOutput ? NodeOutput<string>.From(node.LastDisplayOutput) : NodeOutput<string>.Nothing();
+        return node.LastHadOutput ? NodeOutput<string?>.From(node.LastDisplayOutputValue) : NodeOutput<string?>.Nothing();
     }
 }

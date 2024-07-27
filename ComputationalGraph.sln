@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputationalGraph.Analyzer
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputationalGraph.Analyzers.Sample", "ComputationalGraph.Analyzers.Sample\ComputationalGraph.Analyzers.Sample.csproj", "{047B88C0-5948-4584-8E6F-9BE11F785232}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputationalGraph.Visualisation", "ComputationalGraph.Visualisation\ComputationalGraph.Visualisation.csproj", "{3C175858-7ECC-4B19-B1F7-09AFAAE48B1B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{047B88C0-5948-4584-8E6F-9BE11F785232}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{047B88C0-5948-4584-8E6F-9BE11F785232}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{047B88C0-5948-4584-8E6F-9BE11F785232}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C175858-7ECC-4B19-B1F7-09AFAAE48B1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C175858-7ECC-4B19-B1F7-09AFAAE48B1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C175858-7ECC-4B19-B1F7-09AFAAE48B1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C175858-7ECC-4B19-B1F7-09AFAAE48B1B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -45,7 +45,7 @@ public class GraphTests
         
         graph.Prime();
 
-        List<GraphNode> firedNodes = new();
+        List<GraphNode> firedNodes = [];
 
         graph.NodeFired += (node, _) => firedNodes.Add(node);
         

@@ -135,7 +135,7 @@ public class NodeInspector
     {
         if (type.HasElementType)
         {
-            yield return type;
+            yield return type.GetElementType()!;
         }
 
         if (type.IsGenericType)

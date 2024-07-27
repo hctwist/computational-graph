@@ -35,7 +35,7 @@ public abstract class Node<TOutput> : GraphNode
     /// The node's inputs.
     /// </summary>
     private readonly HashSet<GraphNode> inputs;
-    
+
     /// <summary>
     /// The fallback node, or null if there is no fallback.
     /// </summary>
@@ -64,9 +64,9 @@ public abstract class Node<TOutput> : GraphNode
         LastOutput = Nothing();
 
         graph.AddNode(this);
-        
+
         version = null;
-        
+
         inputs = new HashSet<GraphNode>();
 
         this.fallbackNode = fallbackNode;
@@ -84,29 +84,35 @@ public abstract class Node<TOutput> : GraphNode
     {
         get
         {
-            if (Graph.State is not GraphState.Idle)
-            {
-                throw new InvalidGraphStateException($"Attempted to read output whilst the graph was {Graph.State}");
-            }
-
+            EnsureOutputCanBeAccessed();
             return LastOutput;
         }
     }
 
     /// <inheritdoc/>
-    public override bool WasFired => version == Graph.Version;
+    public sealed override NodeOutput<string?> DisplayOutput
+    {
+        get
+        {
+            EnsureOutputCanBeAccessed();
+            return LastHadOutput ? LastDisplayOutputValue : NodeOutput<string?>.Nothing();
+        }
+    }
+    
+    /// <inheritdoc/>
+    public sealed override bool WasFired => version == Graph.Version;
 
     /// <inheritdoc />
-    internal override IReadOnlySet<GraphNode> Inputs => inputs;
+    public sealed override IReadOnlySet<GraphNode> Inputs => inputs;
 
     /// <inheritdoc />
     internal sealed override bool LastHadOutput => LastOutput.HasOutput;
 
     /// <inheritdoc />
-    internal sealed override string LastDisplayOutput => LastOutput.Value?.ToString() ?? string.Empty;
+    internal sealed override string LastDisplayOutputValue => LastOutput.Value?.ToString() ?? string.Empty;
 
     /// <inheritdoc />
-    internal override bool ShouldFire()
+    internal sealed override bool ShouldFire()
     {
         foreach (GraphNode inputNode in inputs)
         {
@@ -125,23 +131,6 @@ public abstract class Node<TOutput> : GraphNode
         LastOutput = DetermineOutput();
         version = Graph.Version;
         Fired?.Invoke(LastOutput);
-    }
-
-    /// <summary>
-    /// Determines the current output of the node.
-    /// </summary>
-    /// <returns>The output.</returns>
-    private NodeOutput<TOutput> DetermineOutput()
-    {
-        foreach (GraphNode input in inputs)
-        {
-            if (input != fallbackNode && !input.LastHadOutput)
-            {
-                return fallbackNode?.LastOutput ?? Nothing();
-            }
-        }
-
-        return Compute();
     }
 
     /// <summary>
@@ -171,6 +160,35 @@ public abstract class Node<TOutput> : GraphNode
         }
 
         return new NodeInput<TInput>(inputNode);
+    }
+
+    /// <summary>
+    /// Determines the current output of the node.
+    /// </summary>
+    /// <returns>The output.</returns>
+    private NodeOutput<TOutput> DetermineOutput()
+    {
+        foreach (GraphNode input in inputs)
+        {
+            if (input != fallbackNode && !input.LastHadOutput)
+            {
+                return fallbackNode?.LastOutput ?? Nothing();
+            }
+        }
+
+        return Compute();
+    }
+
+    /// <summary>
+    /// Ensures that the graph is in a valid state for output to be accessed.
+    /// </summary>
+    /// <exception cref="InvalidGraphStateException">Thrown if the graph is in an invalid state.</exception>
+    private void EnsureOutputCanBeAccessed()
+    {
+        if (Graph.State is not GraphState.Idle)
+        {
+            throw new InvalidGraphStateException($"Attempted to read output whilst the graph was {Graph.State}");
+        }
     }
 
     /// <summary>
