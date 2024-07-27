@@ -24,9 +24,9 @@ public class GraphVisualiser
     public DescriptorContainer<IReadOnlySet<EdgeDescriptor>> Edges { get; }
     
     /// <summary>
-    /// Gets a descriptor container for node output.
+    /// Gets a descriptor container for node outputs.
     /// </summary>
-    public DescriptorContainer<IReadOnlySet<OutputDescriptor>> Output { get; }
+    public DescriptorContainer<IReadOnlySet<OutputDescriptor>> Outputs { get; }
     
     /// <summary>
     /// Creates a new <see cref="GraphVisualiser"/>.
@@ -38,6 +38,6 @@ public class GraphVisualiser
 
         Nodes = new NodeDescriptorContainer(graph, nodeIdDesignator);
         Edges = new EdgeDescriptorContainer(graph, nodeIdDesignator);
-        Output = new OutputDescriptorContainer(graph, nodeIdDesignator);
+        Outputs = new OutputDescriptorContainer(graph, nodeIdDesignator);
     }
 }

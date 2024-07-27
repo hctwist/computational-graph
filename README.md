@@ -280,6 +280,18 @@ graph.Batch(
 
 Any nodes fired within the action passed will be batched. No nodes will be computed more than once per batch.
 
+## Disengaging
+
+Occasionally there might be a need to add nodes to the graph after it has been primed for the first time.
+To do this the graph first needs to be 'disengaged', which will take it back to the building stage.
+
+```csharp
+graph.Disengage();
+```
+
+After disengaged new nodes can be created and then the graph **must be primed** again before nodes can be fired.
+Nodes only need to compute initial values once, so only new nodes added after disengaging will fire when priming. 
+
 ## Events
 
 ### Fired (Node)
