@@ -26,6 +26,11 @@ public abstract class GraphNode
     public abstract IReadOnlySet<GraphNode> Inputs { get; }
     
     /// <summary>
+    /// Gets or sets whether this node has been primed.
+    /// </summary>
+    internal bool Primed { get; set; }
+    
+    /// <summary>
     /// Gets or sets the node's index in the graph's fire path, or null if it isn't in the path.
     /// </summary>
     internal int? PathIndex { get; set; }
@@ -56,5 +61,8 @@ public abstract class GraphNode
     protected GraphNode()
     {
         Name = GetType().Name;
+        
+        Primed = false;
+        PathIndex = null;
     }
 }

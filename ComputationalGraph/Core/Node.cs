@@ -154,6 +154,11 @@ public abstract class Node<TOutput> : GraphNode
             throw new InvalidGraphStateException($"Tried to add node {inputNode.Name} as an input to node {Name} whilst the graph is {Graph.State}");
         }
 
+        if (Primed)
+        {
+            throw new InvalidNodeInputException($"Tried to add an input to node {Name} after it has been primed");
+        }
+
         if (!inputs.Add(inputNode))
         {
             throw new InvalidNodeInputException($"Node {inputNode.Name} has already been added as an input of {Name}");

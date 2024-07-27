@@ -10,14 +10,13 @@ namespace ComputationalGraph.Nodes.Fundamental;
 public sealed class SourceNode<TOutput> : Node<TOutput>
 {
     /// <summary>
-    /// The output.
+    /// The current output.
     /// </summary>
     private NodeOutput<TOutput> output;
 
     /// <inheritdoc />
-    public SourceNode(Graph graph) : base(graph)
+    public SourceNode(Graph graph) : this(graph, Nothing())
     {
-        output = Nothing();
     }
 
     /// <summary>
@@ -25,7 +24,7 @@ public sealed class SourceNode<TOutput> : Node<TOutput>
     /// </summary>
     /// <param name="graph">The graph.</param>
     /// <param name="initialOutput">The initial output.</param>
-    public SourceNode(Graph graph, TOutput initialOutput) : base(graph)
+    public SourceNode(Graph graph, NodeOutput<TOutput> initialOutput) : base(graph)
     {
         output = initialOutput;
     }
@@ -38,7 +37,7 @@ public sealed class SourceNode<TOutput> : Node<TOutput>
     public void Fire(NodeOutput<TOutput> value)
     {
         output = value;
-        Graph.FireFrom(this);
+        Graph.Fire(this);
     }
 
     /// <inheritdoc />

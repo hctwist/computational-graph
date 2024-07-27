@@ -1,6 +1,6 @@
 ﻿using ComputationalGraph.Core;
 
-namespace ComputationalGraph.Edges;
+namespace ComputationalGraph.Visualisation.Descriptors;
 
 /// <summary>
 /// Descriptor for an edge between a source and target <see cref="GraphNode"/>.

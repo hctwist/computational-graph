@@ -14,15 +14,10 @@ public class Graph
     public event Action<GraphState>? StateChanged;
 
     /// <summary>
-    /// Occurs when a node is primed.
-    /// This is called immediately as the node is primed.
-    /// </summary>
-    public event OnNodeFired? NodePrimed;
-
-    /// <summary>
     /// Occurs when a node is fired.
     /// This is called immediately as the node is fired.
     /// </summary>
+    /// <remarks>This also occurs when priming.</remarks>
     public event OnNodeFired? NodeFired;
 
     /// <summary>
@@ -35,6 +30,11 @@ public class Graph
     /// </list>
     /// </summary>
     public event Action? NodesFired;
+
+    /// <summary>
+    /// Occurs when the graph is primed.
+    /// </summary>
+    public event Action? Primed;
 
     /// <summary>
     /// The graph version. This increments every time an operation causes nodes to be fired.
@@ -114,6 +114,9 @@ public class Graph
     /// <summary>
     /// Primes the graph. This will pre-compute all node outputs and ready the graph for firing.
     /// </summary>
+    /// <remarks>
+    /// Note that node outputs will not be re-computed if they have been primed already (from a previous call to <see cref="Prime"/>).
+    /// </remarks>
     /// <exception cref="InvalidGraphStateException">Thrown if the graph is in an invalid state.</exception>
     public void Prime()
     {
@@ -129,19 +132,19 @@ public class Graph
         foreach (GraphNode node in firePath.ConstantOutputNodes)
         {
             node.PathIndex = null;
-            node.Fire();
-            NodePrimed?.Invoke(node, GetDisplayOutput(node));
+            PrimeSingleIfNotAlready(node);
         }
 
         for (int i = 0; i < firePath.Path.Count; i++)
         {
             GraphNode node = firePath.Path[i];
+            PrimeSingleIfNotAlready(node);
             node.PathIndex = i;
-            node.Fire();
-            NodePrimed?.Invoke(node, GetDisplayOutput(node));
         }
 
         EndFiring();
+        
+        Primed?.Invoke();
     }
 
     /// <summary>
@@ -171,12 +174,27 @@ public class Graph
             // Fire a node if it's part of the batch or its inputs were fired
             if (batchedNodes.Contains(pathNode) || pathNode.ShouldFire())
             {
-                Fire(pathNode);
+                FireSingle(pathNode);
             }
         }
 
         batchedNodes.Clear();
         EndFiring();
+    }
+
+    /// <summary>
+    /// Place the graph back into the <see cref="GraphState.Building"/> state so that more nodes can be added.
+    /// Before firing any nodes, the graph must be primed again via <see cref="Prime"/>. 
+    /// </summary>
+    /// <exception cref="InvalidGraphStateException">Thrown if the graph is in an invalid state.</exception>
+    public void Disengage()
+    {
+        if (State != GraphState.Idle)
+        {
+            throw new InvalidGraphStateException($"Cannot rebuild the graph whilst in state {State}");
+        }
+
+        State = GraphState.Building;
     }
 
     /// <summary>
@@ -207,7 +225,7 @@ public class Graph
     /// </summary>
     /// <param name="node">The node to fire.</param>
     /// <exception cref="InvalidGraphStateException">Thrown if the graph is in an invalid state.</exception>
-    internal void FireFrom(GraphNode node)
+    internal void Fire(GraphNode node)
     {
         if (node.PathIndex is not int pathIndex)
         {
@@ -228,7 +246,7 @@ public class Graph
         StartFiring(GraphState.Firing);
 
         // Fire the source node
-        Fire(node);
+        FireSingle(node);
 
         // Fire any necessary nodes after the node being fired
         for (int i = pathIndex + 1; i < firePath.Path.Count; i++)
@@ -238,18 +256,29 @@ public class Graph
             // Fire a node only if its inputs were fired
             if (pathNode.ShouldFire())
             {
-                Fire(pathNode);
+                FireSingle(pathNode);
             }
         }
 
         EndFiring();
     }
 
+    private void PrimeSingleIfNotAlready(GraphNode node)
+    {
+        if (node.Primed)
+        {
+            return;
+        }
+        
+        FireSingle(node);
+        node.Primed = true;
+    }
+
     /// <summary>
     /// Fires a single node.
     /// </summary>
     /// <param name="node">The node.</param>
-    private void Fire(GraphNode node)
+    private void FireSingle(GraphNode node)
     {
         node.Fire();
         NodeFired?.Invoke(node, GetDisplayOutput(node));

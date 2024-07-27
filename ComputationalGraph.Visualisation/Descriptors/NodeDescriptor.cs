@@ -1,4 +1,4 @@
-﻿namespace ComputationalGraph.Edges;
+﻿namespace ComputationalGraph.Visualisation.Descriptors;
 
 /// <summary>
 /// Descriptor for a <see cref="ComputationalGraph.Core.GraphNode"/>.
