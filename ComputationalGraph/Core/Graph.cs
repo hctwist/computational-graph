@@ -62,6 +62,11 @@ public class Graph
     private readonly HashSet<GraphNode> batchedNodes;
 
     /// <summary>
+    /// Nodes to refire.
+    /// </summary>
+    private readonly HashSet<GraphNode> refireNodes;
+
+    /// <summary>
     /// The graph state.
     /// </summary>
     private GraphState state;
@@ -73,10 +78,11 @@ public class Graph
     {
         Version = 0;
 
-        allNodes = new HashSet<GraphNode>();
+        allNodes = [];
         firePath = new FirePath();
         nodeInspector = new NodeInspector();
-        batchedNodes = new HashSet<GraphNode>();
+        batchedNodes = [];
+        refireNodes = [];
 
         state = GraphState.Building;
     }
@@ -89,8 +95,14 @@ public class Graph
         get => state;
         private set
         {
+            GraphState previousState = state;
+
             state = value;
-            StateChanged?.Invoke(value);
+
+            if (previousState != state)
+            {
+                StateChanged?.Invoke(value);
+            }
         }
     }
 
@@ -164,22 +176,10 @@ public class Graph
 
         StartFiring(GraphState.Firing);
 
-        // All nodes in the batch must have a path index (ie. be on the path)
-        int pathStart = batchedNodes.Min(n => n.PathIndex!.Value);
-
-        for (int i = pathStart; i < firePath.Path.Count; i++)
-        {
-            GraphNode pathNode = firePath.Path[i];
-
-            // Fire a node if it's part of the batch or its inputs were fired
-            if (batchedNodes.Contains(pathNode) || pathNode.ShouldFire())
-            {
-                FireSingle(pathNode);
-            }
-        }
+        Fire(batchedNodes);
 
         batchedNodes.Clear();
-        EndFiring();
+        RefireAndEndFiring();
     }
 
     /// <summary>
@@ -227,11 +227,6 @@ public class Graph
     /// <exception cref="InvalidGraphStateException">Thrown if the graph is in an invalid state.</exception>
     internal void Fire(GraphNode node)
     {
-        if (node.PathIndex is not int pathIndex)
-        {
-            throw new InvalidOperationException("Tried to fire from a node that isn't on the fire path");
-        }
-
         if (State == GraphState.Batching)
         {
             batchedNodes.Add(node);
@@ -249,7 +244,7 @@ public class Graph
         FireSingle(node);
 
         // Fire any necessary nodes after the node being fired
-        for (int i = pathIndex + 1; i < firePath.Path.Count; i++)
+        for (int i = node.PathIndex!.Value + 1; i < firePath.Path.Count; i++)
         {
             GraphNode pathNode = firePath.Path[i];
 
@@ -260,7 +255,43 @@ public class Graph
             }
         }
 
-        EndFiring();
+        RefireAndEndFiring();
+    }
+
+    /// <summary>
+    /// Request that a node gets refired.
+    /// </summary>
+    /// <param name="node">The node.</param>
+    /// <exception cref="InvalidGraphStateException">Thrown if the graph is in an invalid state.</exception>
+    internal void RequestRefire(GraphNode node)
+    {
+        if (State is not (GraphState.Firing or GraphState.Priming))
+        {
+            throw new InvalidGraphStateException($"Cannot refire a node whilst the graph is in state {State}");
+        }
+
+        refireNodes.Add(node);
+    }
+
+    /// <summary>
+    /// Fires a set of nodes.
+    /// </summary>
+    /// <param name="nodes">The nodes.</param>
+    private void Fire(ISet<GraphNode> nodes)
+    {
+        // All nodes in the set must have a path index (ie. be on the path)
+        int pathStart = nodes.Min(n => n.PathIndex!.Value);
+
+        for (int i = pathStart; i < firePath.Path.Count; i++)
+        {
+            GraphNode pathNode = firePath.Path[i];
+
+            // Fire a node if it's part of the batch or its inputs were fired
+            if (nodes.Contains(pathNode) || pathNode.ShouldFire())
+            {
+                FireSingle(pathNode);
+            }
+        }
     }
 
     /// <summary>
@@ -285,7 +316,7 @@ public class Graph
     private void FireSingle(GraphNode node)
     {
         node.Fire();
-        NodeFired?.Invoke(node, node.Output);
+        NodeFired?.Invoke(node, node.LastHadOutput ? node.LastOutputValue : NodeOutput<object?>.Nothing());
     }
 
     /// <summary>
@@ -296,6 +327,21 @@ public class Graph
     {
         State = state;
         Version++;
+    }
+
+    /// <summary>
+    /// Refires any nodes if necessary, then ends firing.
+    /// </summary>
+    private void RefireAndEndFiring()
+    {
+        if (refireNodes.Count > 0)
+        {
+            StartFiring(GraphState.Refiring);
+            Fire(refireNodes);
+            refireNodes.Clear();
+        }
+
+        EndFiring();
     }
 
     /// <summary>

@@ -71,7 +71,7 @@ public abstract class Node<TOutput> : GraphNode
     internal sealed override bool LastHadOutput => LastOutput.HasOutput;
 
     /// <inheritdoc />
-    private protected override object? LastOutputValue => LastOutput.Value;
+    internal override object? LastOutputValue => LastOutput.Value;
 
     /// <summary>
     /// Computes this node's output.

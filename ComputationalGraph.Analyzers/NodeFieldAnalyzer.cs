@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -9,20 +10,16 @@ namespace ComputationalGraph.Analyzers;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class NodeFieldAnalyzer : DiagnosticAnalyzer
 {
-    public const string DiagnosticId = "CGRAPH0001";
-
-    private const string Category = "NodeFields";
-
-    public static readonly DiagnosticDescriptor Rule = new(
-        DiagnosticId,
+    private static readonly DiagnosticDescriptor Rule = new(
+        "CGRAPH0001",
         Resources.CGRAPH0001Title,
         Resources.CGRAPH0001MessageFormat,
-        Category,
+        "NodeFields",
         DiagnosticSeverity.Error,
         true);
 
     /// <inheritdoc/>
-    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(Rule);
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = [Rule];
 
     /// <inheritdoc/>
     public override void Initialize(AnalysisContext context)

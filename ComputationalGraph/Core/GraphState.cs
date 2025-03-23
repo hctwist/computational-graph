@@ -24,6 +24,11 @@ public enum GraphState
     /// The graph is firing.
     /// </summary>
     Firing,
+
+    /// <summary>
+    /// The graph is refiring.
+    /// </summary>
+    Refiring,
     
     /// <summary>
     /// The graph is accepting a batch.

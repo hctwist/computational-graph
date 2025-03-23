@@ -219,6 +219,41 @@ constantNode.Output; // 8
 
 Although a custom constant node could be created, the included `ConstantNode<TOutput>` is optimised as a special case.
 
+#### Pulse Node
+
+The pulse node (`PulseNode<TOutput>`) is the only node that can trigger a 'refire' of the graph. It depends on:
+
+- A source node
+- A default output value
+
+When the source node fires, the pulse node will output the source value but then trigger a refire where it will
+switch to outputting the default output value.
+
+This makes the pulse node appropriate for 'event-like' outputs as opposed to the more standard continuous output style
+of the graph.
+
+In this example the pulse node is created with a default output value of `0`:
+
+```csharp
+var sourceNode = new SourceNode<int>(graph);
+var pulseNode = new PulseNode<int>(graph, sourceNode, 0);
+
+...
+
+sourceNode.Fire(1);
+```
+
+When the source node is fired, the events are as follows:
+
+- The source node is fired with an output of `1`
+- The pulse node is fired with an output of `1`
+- The pulse node requests a refire
+- The pulse node is fired with an output of `0`
+
+If any nodes were dependent on the pulse node, they would get fired both times the pulse node is fired.
+
+*Note that when batching, the refire only occurs at the end of the batch and will also refire any pulse nodes in batch.*
+
 ### Building Block Nodes
 
 There are a few nodes in the `Nodes.BuildingBlocks` namespace that simplify specifying other nodes.
@@ -349,6 +384,7 @@ A graph moves between states throughout its lifetime, the states being:
 - Priming
 - Idle
 - Firing
+- Refiring
 - Batching
 
 Most operations require the graph to be in a particular state (most of which should be intuitive). Some examples of

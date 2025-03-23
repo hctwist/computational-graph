@@ -31,8 +31,8 @@ public class NodeInspector
     public NodeInspector()
     {
         stack = new Stack<Type>();
-        encounteredTypes = new HashSet<Type>();
-        safeTypes = new HashSet<Type>();
+        encounteredTypes = [];
+        safeTypes = [];
     }
 
     /// <summary>
