@@ -26,7 +26,7 @@ public class FunctionNode<TInput1, TOutput> : Node<TOutput>
     }
 
     /// <inheritdoc />
-    public override NodeOutput<TOutput> Compute()
+    protected override NodeOutput<TOutput> Compute()
     {
         return function(input1.Value);
     }
@@ -59,7 +59,7 @@ public class FunctionNode<TInput1, TInput2, TOutput> : Node<TOutput>
     }
 
     /// <inheritdoc />
-    public override NodeOutput<TOutput> Compute()
+    protected override NodeOutput<TOutput> Compute()
     {
         return function(input1.Value, input2.Value);
     }
@@ -96,7 +96,7 @@ public class FunctionNode<TInput1, TInput2, TInput3, TOutput> : Node<TOutput>
     }
 
     /// <inheritdoc />
-    public override NodeOutput<TOutput> Compute()
+    protected override NodeOutput<TOutput> Compute()
     {
         return function(input1.Value, input2.Value, input3.Value);
     }
@@ -137,7 +137,7 @@ public class FunctionNode<TInput1, TInput2, TInput3, TInput4, TOutput> : Node<TO
     }
 
     /// <inheritdoc />
-    public override NodeOutput<TOutput> Compute()
+    protected override NodeOutput<TOutput> Compute()
     {
         return function(input1.Value, input2.Value, input3.Value, input4.Value);
     }
@@ -182,7 +182,7 @@ public class FunctionNode<TInput1, TInput2, TInput3, TInput4, TInput5, TOutput> 
     }
 
     /// <inheritdoc />
-    public override NodeOutput<TOutput> Compute()
+    protected override NodeOutput<TOutput> Compute()
     {
         return function(input1.Value, input2.Value, input3.Value, input4.Value, input5.Value);
     }

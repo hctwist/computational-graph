@@ -18,7 +18,7 @@ public class BenchmarkNode : Node<int>
     }
 
     /// <inheritdoc />
-    public override NodeOutput<int> Compute()
+    protected override NodeOutput<int> Compute()
     {
         return 0;
     }

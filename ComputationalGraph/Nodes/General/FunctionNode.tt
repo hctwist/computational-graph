@@ -44,7 +44,7 @@ public class FunctionNode<<#= GetInputGenericParameterList(count) #>, TOutput> :
         for (int i = 1; i <= count; i++)
         {
 #>
-    private readonly InputNode<<#= GetInputGenericParameterName(i) #>> <#= GetInputParameterName(i) #>;
+    private readonly NodeInput<<#= GetInputGenericParameterName(i) #>> <#= GetInputParameterName(i) #>;
 <#
         }
 #>
@@ -77,7 +77,7 @@ public class FunctionNode<<#= GetInputGenericParameterList(count) #>, TOutput> :
     }
 
     /// <inheritdoc />
-    public override NodeOutput<TOutput> Compute()
+    protected override NodeOutput<TOutput> Compute()
     {
         return function(<#= string.Join(", ", Enumerable.Range(1, count).Select(i => $"{GetInputParameterName(i)}.Value")) #>);
     }

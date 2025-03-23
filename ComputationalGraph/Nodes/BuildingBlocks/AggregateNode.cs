@@ -13,7 +13,7 @@ public abstract class AggregateNode<TInput, TOutput> : Node<TOutput>
     }
 
     /// <inheritdoc />
-    public sealed override NodeOutput<TOutput> Compute()
+    protected sealed override NodeOutput<TOutput> Compute()
     {
         return Compute(inputs.Select(inputNode => inputNode.Value));
     }

@@ -16,7 +16,7 @@ public class OutputDescriptorContainer : DescriptorContainer<IReadOnlySet<Output
     /// <inheritdoc />
     public override IReadOnlySet<OutputDescriptor> Get()
     {
-        return Graph.AllNodes.Select(node => new OutputDescriptor(NodeIdDesignator.DesignateId(node), node.DisplayOutput)).ToHashSet();
+        return Graph.AllNodes.Select(node => new OutputDescriptor(NodeIdDesignator.DesignateId(node), node.Output)).ToHashSet();
     }
     
     /// <summary>
@@ -42,7 +42,7 @@ public class OutputDescriptorContainer : DescriptorContainer<IReadOnlySet<Output
                 continue;
             }
 
-            firedOutputDescriptors.Add(new OutputDescriptor(NodeIdDesignator.DesignateId(node), node.DisplayOutput));
+            firedOutputDescriptors.Add(new OutputDescriptor(NodeIdDesignator.DesignateId(node), node.Output));
         }
         
         return firedOutputDescriptors;

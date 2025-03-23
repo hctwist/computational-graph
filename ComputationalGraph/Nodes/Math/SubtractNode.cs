@@ -16,7 +16,7 @@ public class SubtractNode<TNumber> : Node<TNumber> where TNumber : INumber<TNumb
     }
 
     /// <inheritdoc />
-    public override NodeOutput<TNumber> Compute()
+    protected override NodeOutput<TNumber> Compute()
     {
         return left.Value - right.Value;
     }

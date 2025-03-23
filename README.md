@@ -1,7 +1,6 @@
 # Computational Graph
 
-Simple framework for specifying and evaluating [computational graphs](https://en.wikipedia.org/wiki/Directed_graph) in
-C#.
+Framework for specifying and evaluating [computational graphs](https://en.wikipedia.org/wiki/Directed_graph) in C#.
 
 ## The Purpose
 
@@ -12,10 +11,11 @@ Building computations inside the graph framework gives you a few main benefits:
   graph
 - Computation is optimised and isolated to the subgraphs in which a dependency changed
 - A node-based architecture lends itself to being easily testable
+- Tooling can be easily created; for visualisation, dynamic parameterisation etc.
 
 ## Usage
 
-Let's create a graph representing the simple equation:
+Let's explore the simple equation:
 
 ```math
 (x + y) * z
@@ -290,7 +290,7 @@ graph.Disengage();
 ```
 
 After disengaged new nodes can be created and then the graph **must be primed** again before nodes can be fired.
-Nodes only need to compute initial values once, so only new nodes added after disengaging will fire when priming. 
+Nodes only need to compute initial values once, so only new nodes added after disengaging will fire when priming.
 
 ## Events
 
@@ -303,10 +303,10 @@ Nodes have a single event that can be subscribed to: `Fired`. This occurs immedi
 node.Fired += (node, output) => DoSomething(output);
 ```
 
-### Primed and Fired (Graph)
+### Node Fired (Graph)
 
-`NodePrimed` and `NodeFired` are events that occur when a node is primed or fired, and operate on the graph level.
-These can be used as an alternative to the `Fired` event directly on nodes:
+`NodeFired` is an event that occurs when any node is fired on the graph level. This can be used as an alternative to
+the `Fired` event directly on nodes:
 
 ```csharp
 graph.NodePrimed += (node, output) => Console.WriteLine($"Primed node {node.Name}. Output = {output}");
@@ -374,12 +374,8 @@ Firing nodes is lightweight. Paths are pre-constructed when the graph is primed 
 ## Allocations
 
 Firing nodes in the graph is considered to be zero-allocation (no heap allocations), with the exception of when a
-handler is attached to the following graph-level events:
-
-- `Graph.NodePrimed`
-- `Graph.NodeFired`
-
-as these both construct string outputs of the nodes. The other node firing events do not provide string output so are safe.
+handler is attached to the `Graph.NodeFired` event as it can box the node output. The other node firing events do not
+provide string output so are safe.
 
 *Note that there are no allocation guarantees in the build or prime stage of the graph.*
 

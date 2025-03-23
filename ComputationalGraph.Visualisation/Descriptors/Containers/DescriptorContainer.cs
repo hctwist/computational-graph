@@ -44,7 +44,7 @@ public abstract class DescriptorContainer<TDescriptor>
     /// <summary>
     /// Gets the current value of the descriptor.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>The descriptor.</returns>
     public abstract TDescriptor Get();
 
     /// <summary>

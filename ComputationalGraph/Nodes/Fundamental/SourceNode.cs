@@ -41,7 +41,7 @@ public sealed class SourceNode<TOutput> : Node<TOutput>
     }
 
     /// <inheritdoc />
-    public override NodeOutput<TOutput> Compute()
+    protected override NodeOutput<TOutput> Compute()
     {
         return output;
     }

@@ -21,7 +21,7 @@ public sealed class FallbackNode<TOutput> : Node<TOutput>
     }
 
     /// <inheritdoc />
-    public override NodeOutput<TOutput> Compute()
+    protected override NodeOutput<TOutput> Compute()
     {
         return input.Value;
     }

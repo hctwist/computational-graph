@@ -1,4 +1,5 @@
 ﻿using ComputationalGraph.Core;
+using ComputationalGraph.Nodes.Math;
 using ComputationalGraph.Visualisation.Descriptors;
 using ComputationalGraph.Visualisation.Descriptors.Containers;
 
@@ -35,7 +36,7 @@ public class GraphVisualiser
     public GraphVisualiser(Graph graph)
     {
         NodeIdDesignator nodeIdDesignator = new();
-
+        
         Nodes = new NodeDescriptorContainer(graph, nodeIdDesignator);
         Edges = new EdgeDescriptorContainer(graph, nodeIdDesignator);
         Outputs = new OutputDescriptorContainer(graph, nodeIdDesignator);

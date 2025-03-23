@@ -15,7 +15,7 @@ public class SampleNode : Node<int>
     }
 
     /// <inheritdoc />
-    public override NodeOutput<int> Compute()
+    protected override NodeOutput<int> Compute()
     {
         return input.Output;
     }

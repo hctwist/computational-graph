@@ -16,7 +16,7 @@ public class DivideNode<TNumber> : Node<TNumber> where TNumber : INumber<TNumber
     }
 
     /// <inheritdoc />
-    public override NodeOutput<TNumber> Compute()
+    protected override NodeOutput<TNumber> Compute()
     {
         return left.Value / right.Value;
     }

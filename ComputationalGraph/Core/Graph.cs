@@ -263,6 +263,10 @@ public class Graph
         EndFiring();
     }
 
+    /// <summary>
+    /// Primes a single node if it hasn't already been primed.
+    /// </summary>
+    /// <param name="node">The node.</param>
     private void PrimeSingleIfNotAlready(GraphNode node)
     {
         if (node.Primed)
@@ -281,7 +285,7 @@ public class Graph
     private void FireSingle(GraphNode node)
     {
         node.Fire();
-        NodeFired?.Invoke(node, GetDisplayOutput(node));
+        NodeFired?.Invoke(node, node.Output);
     }
 
     /// <summary>
@@ -301,15 +305,5 @@ public class Graph
     {
         State = GraphState.Idle;
         NodesFired?.Invoke();
-    }
-
-    /// <summary>
-    /// Gets the display output for a node.
-    /// </summary>
-    /// <param name="node">The node.</param>
-    /// <returns>The display output.</returns>
-    private static NodeOutput<string?> GetDisplayOutput(GraphNode node)
-    {
-        return node.LastHadOutput ? NodeOutput<string?>.From(node.LastDisplayOutputValue) : NodeOutput<string?>.Nothing();
     }
 }

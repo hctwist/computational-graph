@@ -33,7 +33,7 @@ public readonly struct NodeOutput<TOutput>
     /// Gets the output value.
     /// </summary>
     /// <exception cref="NoOutputValueException">Thrown if there is no output.</exception>
-    public TOutput Value => HasOutput ? value! : throw new NoOutputValueException($"Node has no output value. This should not be accessed outside of {nameof(Node<object>.Compute)}");
+    public TOutput Value => HasOutput ? value! : throw new NoOutputValueException("Node has no output value. This should not be accessed outside of compute");
 
     /// <summary>
     /// Creates a node output with a value.
